@@ -15,3 +15,22 @@ from tqdm import tqdm
 import sys
 sys.path.append('C:\\Users\\Rafael\\Trading\\Trading')
 import TradingModule
+
+inic =''
+with open('C:\\Users\\Rafael\\Trading\\Trading\\ibov.pkl','rb') as file:
+        data =pickle.load(file)
+data1 =data['Adj Close']
+
+
+
+def worker(params):
+    
+    global data1
+    pars = {}
+    pars2 = {}
+    for i in params:
+        z,y=i[0],i[1]
+        test =data1.apply(TradingModule.rollmeanstrat,args=(z,y)) 
+        pars[(z,y)]=test.sum().mean()
+        pars2[(z,y)]=test.sum().median()
+    return pars
