@@ -2,11 +2,8 @@ import pandas as pd
 import numpy as np 
 import pickle
 
-
-
-
-
 class estrategias:
+
     decisao_previa =''  
     preco_inicial=0
     resultado_previo=0      
@@ -159,29 +156,21 @@ class estrategias:
             return(self.resultado_previo)
     
     result=''
-    def stop(self,valores,gain=1000000000,loss=10000000000):
-        if valores[0]=='COMPRA':
-            print(self.result,valores,loss) 
-        if valores[1]>gain:
-            
-            print(1)
-            self.result='VENDA'
-            return ('VENDA')
-        elif valores[1]<loss:
-            print(2)
-            self.result='VENDA'
-            return( 'VENDA')
-        elif self.result=='VENDA' and  valores[0]=='COMPRA':
-            print(3)
-            return('VENDA')
-        elif self.result=='VENDA' and  valores[0]=='VENDA':
-            print(4)
-            self.result='COMPRA'
-            return ('VENDA')
-        else:
-            
-            return valores[0]
-
+    def stop_loss(self,x,stop):
+        #É um gato, mas funciona
+    #Soma acumulada da decisão == 0 quando se esta comprado,então autoamticamente cada compra ganhya um codigo
+        x['SUM']=x['DECISAO'].cumsum()
+        #Calcula o resultado dentro de cada operação
+        x["OP_RESULT"]=x[x['DECISAO']==0].groupby(['SUM'])['DAILY_CHANGE'].cumprod()
+        #filtro para operações abaixo do stop
+        f=x['OP_RESULT']<stop
+        #pega a primeira data onde aquela operação entrou em stop   
+        f=x[f]['SUM'].reset_index().groupby(['SUM']).min()
+        #cria um filtro para todas as datas subsequentes dentro da mesma operação
+        f=pd.DataFrame(index=x.SUM).join(f)
+        #filtra as operações que entrata em stop
+        x=x[~(x.index>=f['Date']) &( f.index==x.SUM)]
+        return x
 
 
 
